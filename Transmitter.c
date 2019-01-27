@@ -84,7 +84,7 @@ int main(void){
 
 
 
-/* Arduino Code
+/* Arduino Transmitter
 int message[8];
  short del = 10;
  short play = 100;
@@ -159,25 +159,124 @@ void sync(){
   playfreqk(play,f1);
   delay(del);
 }
-*/
+//Ardino Reciever
+int dig = 1;
+int lastDig = 1;
+const int a = 7;
+int diga[a];
+int on = 0;
+int del = 1000; //initial and end delay on bit reading
+long T = 102000; //time of one bit in microseconds
+//short delsync = T/3; not used anymore//delay between sampling on sync
+unsigned long tim;
+boolean byt[8];
+float wait = 1.3;
 
 
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(A0, OUTPUT);
+  pinMode(3,OUTPUT);
+  pinMode(4,OUTPUT);
+  pinMode(5,OUTPUT);
+  pinMode(6,OUTPUT);
+  pinMode(7,OUTPUT);
+  pinMode(8,OUTPUT);
+  pinMode(9,OUTPUT);
+  pinMode(10,OUTPUT);
+}
 
+void loop() {
+  // put your main code here, to run repeatedly:
+  int l = 0;
+  if(digitalRead(11) ==1){
+    on = 1;
+  }
+  if (on ==1){
+    //l = 0; I don't know who put this here or why
+    Serial.println("s");
+    sync();
+    //delay(T/1000);
+    delay(wait*T/1000);
+    Serial.print("d");
+    //This loop prints correct values as long as nothing changes the timing of it and it doesn't go on longer than like 70
+  for(int i=0; i<8; i++){
+    tim = millis();
+    int ave =0;
+    int b = a;
+    for(int k=0; k<a;k++){
+        delayMicroseconds(T/a/3);
+        diga[k] = digitalRead(2);
+        Serial.print(diga[k]);
+        if(tim+(T*(2-wait)/1000)<=millis()){
+          b = k-1;
+        }
+      }
+     if(ave==0){
+       Serial.println();
+       ave++;
+       int sum = 0;
+       for(int j=0; j<b; j++){
+          sum += diga[j];
+        }
+        if(sum > b/2){
+          if(l<8){
+            byt[l] = 1;
+            l++;
+          }
+        }
+        else{
+          if(l<8){
+            byt[l] = 0;
+            l++;
+          }
+        }
+      }
+      if(millis()<tim+(T*(2-wait)/1000)){
+        delay((T/1000)+tim-millis());
+      }
+    }
+for(int q = 0; q<8; q++){Serial.print(byt[q]);}
+Serial.println();
+  for(int q = 0; q<8; q++){Serial.print(byt[q]);}
+  digitalWrite(3, byt[0]);
+  digitalWrite(4, byt[1]);
+  digitalWrite(5, byt[2]);
+  digitalWrite(6, byt[3]);
+  digitalWrite(7, byt[4]);
+  digitalWrite(8, byt[5]);
+  digitalWrite(9, byt[6]);
+  digitalWrite(10, byt[7]);
+  on = 0;
+}
+}
 
+void sync(){
 
+int count = 0;
+long t0 = 0;
+int t1 = 0;
 
-
-
-
-
-
-
-
-
-
-
-
-
+int readin = digitalRead(2);
+while(readin==0){
+  readin = digitalRead(2);
+ }
+while(readin==1){
+  readin = digitalRead(2);
+ }
+t0 = millis();
+while(millis()<=(t0+(T/2000))||readin ==1){
+  readin = digitalRead(2);
+ }
+while(readin==0){
+  count++;
+  readin = digitalRead(2);
+ }
+t1 = millis();
+//Serial.println((t1 - t0)*1000);
+Serial.println(T);
+}
 
 
 
