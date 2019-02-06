@@ -6,6 +6,7 @@ public class Transmitter {
 	}
 	//Some other guys hamming code
 	
+
 	//Hamming Code 
 import java.util.*;
 
@@ -207,12 +208,44 @@ public class Transmitter {
 				e4 = true;
 			}
 			//I have to look more in depth if their is java code for this because this will take forever
-			if(e1) { if(e2) { if(e3) { if(e4) System.out.println("Error with hamming Decoding");
-			else {if(m4) m4 = false;
-			else m4 = true;
-			}
-			}}}
-			p[2] = d[1];
+			if(e1){ 	if(e2){ 	if(e3){ 	if(e4) System.out.println("Error with hamming Decoding");
+									else {	if(m4) m4 = false;
+										else m4 = true;}}
+							else {		if(e4){ if(m7) m7 = false;
+				       						else m7 = true; }
+									else{	if(m1) m1 = false;
+										else m1 = true;}}}
+					else{ 		if(e3){ 	if(e4){ System.out.println("Error with hamming Decoding");}
+					     				else{ 	if(m2) m2 = false;
+					     					else m2 = true;}}
+							else { 		if(e4) {if(m5) m5 = false;
+										else m5 = true;}
+									else { 	if(p1) p1 = false;
+										else p1 = true;}}}}
+			else { 		if(e2){ 	if(e3){ 	if(e4) System.out.println("Error with hamming Decoding");
+									else { 	if(m3) m3 = false;
+										else m3 = true;}}
+							else { 		if(e4) { if(m6) m6 = false;
+										else m6 = true;}
+									else { 	if(p2) p2 = false;
+										else p2 = true;}}}
+					else {		if(e3) {	if(e4) {if(m8) m8 = false;
+										else m8 = true;}
+									else {	if(p3) p3 = false;
+										else p3 = true;}}
+							else {		if(e4) { if(p4) p4 = false;
+										else p4 = true;}
+									else { System.out.println("No Hamming Done");}}}}
+			
+			if(m8) p[1] += 0x80;
+			if(m7) p[1] += 0x40;
+			if(m6) p[1] += 0x20;
+			if(m5) p[1] += 0x10;
+			if(m4) p[1] += 0x08;
+			if(m3) p[1] += 0x04;
+			if(m2) p[1] += 0x02;
+			if(m1) p[1] += 0x01;
+			
 			c = p;
 		}
 		else {
