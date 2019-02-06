@@ -2,8 +2,39 @@ public class Transmitter {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		//data stream out
+		out = new DataOutputStream(new BufferedOutputStream(
+              		new FileOutputStream(dataFile)));
 
-	}
+	for (int i = 0; i < prices.length; i ++) {
+    		out.writeDouble(prices[i]);
+    		out.writeInt(units[i]);
+    		out.writeUTF(descs[i]);
+		}
+		
+		//data stream in
+		in = new DataInputStream(new
+	        BufferedInputStream(new FileInputStream(dataFile)));
+
+		double price;
+		int unit;
+		String desc;
+		double total = 0.0;
+
+		try {
+    			while (true) {
+        		price = in.readDouble();
+        		unit = in.readInt();
+        		desc = in.readUTF();
+        		System.out.format("You ordered %d" + " units of %s at $%.2f%n",
+            			unit, desc, price);
+        		total += unit * price;
+    		}
+	} catch (EOFException e) {}
+}
+	
+	
+	
 	//Some other guys hamming code
 	
 
