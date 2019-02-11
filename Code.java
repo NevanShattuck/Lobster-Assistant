@@ -1,163 +1,71 @@
+import com.pi4j.io.gpio.GpioController;
+import com.pi4j.io.gpio.GpioFactory;
+import com.pi4j.io.gpio.GpioPinDigitalOutput;
+import com.pi4j.io.gpio.GpioPinDigitalInput;
+import com.pi4j.io.gpio.PinState;
+import com.pi4j.io.gpio.RaspiPin;
+
 public class Transmitter {
 
+	final int bittime = 100; //in milli
+	final int deslength = 2; //designated legnth of signal in bytes including parity
+	
+	//Creating pins for transmission
+			// create gpio controller
+	        	final GpioController gpio = GpioFactory.getInstance();
+
+	        	// provision gpio pin #01 as an output pin and turn on
+	        	final GpioPinDigitalOutput pin0 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_00, "35kHz", PinState.LOW);
+	        	final GpioPinDigitalOutput pin1 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_01, "27kHz", PinState.LOW);
+	        	final GpioPinDigitalInput pin2 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_02);
+
+	        	
+			// functions include pin0.toggle() .low() .high() .pulse(time milli, true/false), Thread.sleep(time milli), gpio.shutdown()
+		
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		//data stream out
-		out = new DataOutputStream(new BufferedOutputStream(
-              		new FileOutputStream(dataFile)));
-
-	for (int i = 0; i < prices.length; i ++) {
-    		out.writeDouble(prices[i]);
-    		out.writeInt(units[i]);
-    		out.writeUTF(descs[i]);
-		}
 		
-		//data stream in
-		in = new DataInputStream(new
-	        BufferedInputStream(new FileInputStream(dataFile)));
-
-		double price;
-		int unit;
-		String desc;
-		double total = 0.0;
-
-		try {
-    			while (true) {
-        		price = in.readDouble();
-        		unit = in.readInt();
-        		desc = in.readUTF();
-        		System.out.format("You ordered %d" + " units of %s at $%.2f%n",
-            			unit, desc, price);
-        		total += unit * price;
-    		}
-	} catch (EOFException e) {}
-}
-	
-	
-	
-	//Some other guys hamming code
-	
-
-	//Hamming Code 
-import java.util.*;
-
-class sjs7007_Hamming_Code
-{
-	public static void main(String[] args) 
-	{
-		Scanner ip = new Scanner(System.in);
-		System.out.print("Enter Message : ");
-		String msg = ip.next();
-		int r=0,m=msg.length(); 
-		//calculate number of parity bits needed using m+r+1<=2^r
-		while(true)
-		{
-			if(m+r+1<=Math.pow(2,r))
-			{
-				break;
-			}
-			r++;
 		}
-		System.out.println("Number of parity bits needed : "+r);
-		int transLength = msg.length()+r,temp=0,temp2=0,j=0;
-		int transMsg[]=new int[transLength+1]; //+1 because starts with 1
-		for(int i=1;i<=transLength;i++)
-		{
-			temp2=(int)Math.pow(2,temp);
-			if(i%temp2!=0)
-			{
-				transMsg[i]=Integer.parseInt(Character.toString(msg.charAt(j)));
-				j++;
-			}
-			else
-			{
-				temp++;
-			}
-		}
-		for(int i=1;i<=transLength;i++)
-		{
-			System.out.print(transMsg[i]);
-		}
-		System.out.println();	
-
-		for(int i=0;i<r;i++)
-		{
-			int smallStep=(int)Math.pow(2,i);
-			int bigStep=smallStep*2;
-			int start=smallStep,checkPos=start;
-			System.out.println("Calculating Parity bit for Position : "+smallStep);
-			System.out.print("Bits to be checked : ");
-			while(true)
-			{
-				for(int k=start;k<=start+smallStep-1;k++)
-				{
-					checkPos=k;
-					System.out.print(checkPos+" ");
-					if(k>transLength)
-					{
-						break;
-					}
-					transMsg[smallStep]^=transMsg[checkPos];
+	
+	public void Transmit(byte d[]) throws InterruptedException {
+		// set shutdown state for this pin
+    	pin0.setShutdownOptions(true, PinState.LOW);
+    	pin1.setShutdownOptions(true, PinState.LOW);
+		pin1.pulse(bittime,true);
+		Thread.sleep(bittime);
+		pin0.pulse(bittime,true);
+		Thread.sleep(bittime);
+		for(int i = 1; i < deslength + 1; i++){
+			for(int j = 0; j<8; j++){
+				if((d[i] & (2^j)) == (2^j)){
+					pin1.pulse(bittime,true);	
 				}
-				if(checkPos>transLength)
-				{
-					break;
+				else{
+					pin0.pulse(bittime,true);
 				}
-				else
-				{
-					start=start+bigStep;
-				}
+				Thread.sleep(bittime);
 			}
-			System.out.println();
-		}	
-		//Display encoded message
-		System.out.print("Hamming Encoded Message : ");
-		for(int i=1;i<=transLength;i++)
-		{
-			System.out.print(transMsg[i]);
 		}
-		System.out.println();
+		//make sure reciever stays high
+		pin1.pulse(bittime,true);
 	}
-}
-
-/* Output
-Enter Message : 1001
-Number of parity bits needed : 3
-0010001
-Calculating Parity bit for Position : 1
-Bits to be checked : 1 3 5 7 9 
-Calculating Parity bit for Position : 2
-Bits to be checked : 2 3 6 7 10 
-Calculating Parity bit for Position : 4
-Bits to be checked : 4 5 6 7 12 
-Hamming Encoded Message : 0011001
-*/
 	
-	
-	public byte[] encoder(byte d[]) {
-		//Hamming even?
-		byte c[] = {0};
-		
-		boolean m8 = ((d[1] & 0x80) == 0x80);
-		boolean m7 = ((d[1] & 0x40) == 0x40);
-		boolean m6 = ((d[1] & 0x20) == 0x20);
-		boolean m5 = ((d[1] & 0x10) == 0x10);
-		boolean m4 = ((d[1] & 0x08) == 0x08);
-		boolean m3 = ((d[1] & 0x04) == 0x04);
-		boolean m2 = ((d[1] & 0x02) == 0x02);
-		boolean m1 = ((d[1] & 0x01) == 0x01);
-		
-		if(d.length==1) {
-			byte p[] = new byte[2];
-			if(m1^m2^m4^m5^m7) {
-				p[1]+=0x01;
+	public byte[] Recieve() throws InterruptedException{
+		byte d[] = new byte[deslength];
+		while(pin2.isHigh());
+		Thread.sleep((int)(bittime*1.5));
+		for(int i = 1; i < deslength+1; i++){
+			for( int j = 0; j<8; j++){
+				if(pin2.isHigh()){
+				d[i] += 2^j;	
+				}
+				else{
+					
+				}
+				Thread.sleep(bittime);
 			}
-			if(m1^m3^m4^m6^m7) {
-public class Transmitter {
-
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		}
+		return d;
 	}
 	
 	public byte[] SVDCompression(byte d[]) {
@@ -291,6 +199,134 @@ public class Transmitter {
 	}
 
 }
+
+//data stream out
+		/*
+		out = new DataOutputStream(new BufferedOutputStream(
+              		new FileOutputStream(dataFile)));
+
+	for (int i = 0; i < prices.length; i ++) {
+    		out.writeDouble(prices[i]);
+    		out.writeInt(units[i]);
+    		out.writeUTF(descs[i]);
+		}
+		
+		//data stream in
+		in = new DataInputStream(new
+	        BufferedInputStream(new FileInputStream(dataFile)));
+
+		double price;
+		int unit;
+		String desc;
+		double total = 0.0;
+
+		try {
+    			while (true) {
+        		price = in.readDouble();
+        		unit = in.readInt();
+        		desc = in.readUTF();
+        		System.out.format("You ordered %d" + " units of %s at $%.2f%n",
+            			unit, desc, price);
+        		total += unit * price;
+    		}
+	} catch (EOFException e) {} */
+	//Some other guys hamming code
+	//Hamming Code 
+	/*
+import java.util.*;
+
+class sjs7007_Hamming_Code
+{
+	public static void main(String[] args) 
+	{
+		Scanner ip = new Scanner(System.in);
+		System.out.print("Enter Message : ");
+		String msg = ip.next();
+		int r=0,m=msg.length(); 
+		//calculate number of parity bits needed using m+r+1<=2^r
+		while(true)
+		{
+			if(m+r+1<=Math.pow(2,r))
+			{
+				break;
+			}
+			r++;
+		}
+		System.out.println("Number of parity bits needed : "+r);
+		int transLength = msg.length()+r,temp=0,temp2=0,j=0;
+		int transMsg[]=new int[transLength+1]; //+1 because starts with 1
+		for(int i=1;i<=transLength;i++)
+		{
+			temp2=(int)Math.pow(2,temp);
+			if(i%temp2!=0)
+			{
+				transMsg[i]=Integer.parseInt(Character.toString(msg.charAt(j)));
+				j++;
+			}
+			else
+			{
+				temp++;
+			}
+		}
+		for(int i=1;i<=transLength;i++)
+		{
+			System.out.print(transMsg[i]);
+		}
+		System.out.println();	
+
+		for(int i=0;i<r;i++)
+		{
+			int smallStep=(int)Math.pow(2,i);
+			int bigStep=smallStep*2;
+			int start=smallStep,checkPos=start;
+			System.out.println("Calculating Parity bit for Position : "+smallStep);
+			System.out.print("Bits to be checked : ");
+			while(true)
+			{
+				for(int k=start;k<=start+smallStep-1;k++)
+				{
+					checkPos=k;
+					System.out.print(checkPos+" ");
+					if(k>transLength)
+					{
+						break;
+					}
+					transMsg[smallStep]^=transMsg[checkPos];
+				}
+				if(checkPos>transLength)
+				{
+					break;
+				}
+				else
+				{
+					start=start+bigStep;
+				}
+			}
+			System.out.println();
+		}	
+		//Display encoded message
+		System.out.print("Hamming Encoded Message : ");
+		for(int i=1;i<=transLength;i++)
+		{
+			System.out.print(transMsg[i]);
+		}
+		System.out.println();
+	}
+}
+	*/
+
+/* Output
+Enter Message : 1001
+Number of parity bits needed : 3
+0010001
+Calculating Parity bit for Position : 1
+Bits to be checked : 1 3 5 7 9 
+Calculating Parity bit for Position : 2
+Bits to be checked : 2 3 6 7 10 
+Calculating Parity bit for Position : 4
+Bits to be checked : 4 5 6 7 12 
+Hamming Encoded Message : 0011001
+*/
 /* Arduino Transmitter
 int message[8];
  short del = 10;
@@ -474,24 +510,6 @@ t1 = millis();
 Serial.println(T);
 }
 */
-				p[1]+=0x02;
-			}
-			if(m2^m3^m4^m8) {
-				p[1]+=0x04;
-			}
-			if(m5^m6^m7^m8) {
-				p[1]+=0x08;
-			}
-			p[2] = d[1];
-			c = p;
-		}
-		else {
-		System.out.println("Number of bytes not supported yet"); 
-		}
-		return c;
-	}
-
-}
 /* Arduino Transmitter
 int message[8];
  short del = 10;
